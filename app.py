@@ -4,6 +4,7 @@ import numpy as np
 import mediapipe as mp
 import base64
 import time
+import os
 
 app = Flask(__name__)
 
@@ -100,4 +101,5 @@ def process_frame():
     return jsonify({"done": False, "message": message})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
