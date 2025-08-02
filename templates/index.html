@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Eye Power Estimator</title>
+  <style>
+    body { font-family: Arial; text-align: center; background: #111; color: white; }
+    #video { width: 480px; height: auto; border: 2px solid green; margin-top: 20px; }
+    #result { font-size: 1.2em; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>🧠 Eye Power Estimator</h1>
+  <p id="status">⏳ Starting...</p>
+  <video id="video" autoplay muted></video>
+  <p id="result">Detecting...</p>
+
+  <script>
+    const video = document.getElementById('video');
+    const result = document.getElementById('result');
+    const status = document.getElementById('status');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        setInterval(() => {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+
+          const imageData = canvas.toDataURL('image/jpeg');
+          fetch('/process_frame', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ frame: imageData })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.done) {
+              status.textContent = "✅ Test Complete";
+              result.textContent = data.result;
+            } else {
+              status.textContent = data.message;
+            }
+          })
+          .catch(() => {
+            result.textContent = "❌ Error communicating with backend";
+          });
+        }, 500);
+      })
+      .catch(() => {
+        result.textContent = "❌ Camera access denied.";
+      });
+  </script>
+</body>
+</html>
